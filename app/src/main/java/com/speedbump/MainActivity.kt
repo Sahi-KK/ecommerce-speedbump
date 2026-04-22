@@ -41,22 +41,30 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val accessibilityButton = Button(this).apply {
-            text = "Enable Accessibility Service"
+        val usageButton = Button(this).apply {
+            text = "Enable Usage Access"
             setOnClickListener {
                 try {
-                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                    val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
                     startActivity(intent)
                 } catch (e: Exception) {
-                    Toast.makeText(this@MainActivity, "Could not open accessibility settings", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "Could not open settings", Toast.LENGTH_SHORT).show()
                 }
             }
         }
 
         rootLayout.addView(overlayButton)
-        rootLayout.addView(accessibilityButton)
+        rootLayout.addView(usageButton)
         
         setContentView(rootLayout)
+
+        // Start the monitor service
+        val serviceIntent = Intent(this, SpeedbumpMonitorService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+        } else {
+            startService(serviceIntent)
+        }
         } catch (e: Exception) {
             android.util.Log.e("Speedbump", "MainActivity Crash: ${e.message}")
             finish()

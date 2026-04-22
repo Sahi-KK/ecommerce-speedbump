@@ -61,7 +61,11 @@ class SpeedbumpOverlay(private val context: Context) {
         }
 
         val messageText = TextView(context).apply {
-            text = "This costs %.1f hours of your life.".format(hoursLost)
+            text = if (hoursLost > 0) {
+                "This costs %.1f hours of your life.".format(hoursLost)
+            } else {
+                "Pause! Is this an impulse purchase?"
+            }
             setTextColor(Color.WHITE)
             textSize = 28f
             setTypeface(null, Typeface.BOLD)
