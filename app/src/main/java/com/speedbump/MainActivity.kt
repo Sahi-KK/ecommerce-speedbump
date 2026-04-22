@@ -128,6 +128,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(mainLayout)
 
         startMonitorService()
+        
+        // Check for updates
+        UpdateManager(this).checkForUpdates()
     }
 
     override fun onResume() {
