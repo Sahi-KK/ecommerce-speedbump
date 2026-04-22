@@ -52,7 +52,7 @@ class SpeedbumpOverlay(private val context: Context) {
                 return super.dispatchKeyEvent(event)
             }
         }.apply {
-            orientation = VERTICAL
+            orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.BLACK)
             gravity = Gravity.CENTER
             setPadding(40, 40, 40, 40)
