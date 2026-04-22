@@ -15,13 +15,14 @@ import android.view.Gravity
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
-        val rootLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setPadding(50, 50, 50, 50)
-        }
+        try {
+            super.onCreate(savedInstanceState)
+            
+            val rootLayout = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                setPadding(50, 50, 50, 50)
+            }
 
         val overlayButton = Button(this).apply {
             text = "Enable Overlay Permission"
@@ -56,5 +57,9 @@ class MainActivity : AppCompatActivity() {
         rootLayout.addView(accessibilityButton)
         
         setContentView(rootLayout)
+        } catch (e: Exception) {
+            android.util.Log.e("Speedbump", "MainActivity Crash: ${e.message}")
+            finish()
+        }
     }
 }

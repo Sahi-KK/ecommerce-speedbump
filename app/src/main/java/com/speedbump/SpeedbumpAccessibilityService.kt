@@ -35,12 +35,16 @@ class SpeedbumpAccessibilityService : AccessibilityService() {
 
     private val CURRENCY_REGEX = Regex("₹\\s?([\\d,]+(\\.\\d{1,2})?)")
     private var hourlyWage: Double = 500.0
-    private lateinit var overlay: SpeedbumpOverlay
+    private var overlay: SpeedbumpOverlay? = null
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        Log.d("SpeedbumpService", "Service Connected")
-        overlay = SpeedbumpOverlay(this)
+        try {
+            Log.d("SpeedbumpService", "Service Connected")
+            overlay = SpeedbumpOverlay(this)
+        } catch (e: Exception) {
+            Log.e("SpeedbumpService", "Error initializing overlay: ${e.message}")
+        }
     }
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         val packageName = event?.packageName?.toString() ?: return
@@ -112,7 +116,7 @@ class SpeedbumpAccessibilityService : AccessibilityService() {
         Log.d("SpeedbumpService", "Hours Lost: $formattedHours hours")
         
         // Launch aggressive overlay
-        overlay.show(hoursLost)
+        overlay?.show(hoursLost)
     }
 
     override fun onInterrupt() {
