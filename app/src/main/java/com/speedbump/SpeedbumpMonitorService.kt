@@ -66,8 +66,10 @@ class SpeedbumpMonitorService : Service() {
         overlay = SpeedbumpOverlay(this)
         prefs = getSharedPreferences("speedbump_prefs", Context.MODE_PRIVATE)
         
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= 34) { // UPSIDE_DOWN_CAKE
             startForeground(1, createNotification(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(1, createNotification(), 0)
         } else {
             startForeground(1, createNotification())
         }

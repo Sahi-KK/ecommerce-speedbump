@@ -24,113 +24,123 @@ class MainActivity : AppCompatActivity() {
     private lateinit var savingsText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        prefs = getSharedPreferences("speedbump_prefs", Context.MODE_PRIVATE)
+        try {
+            super.onCreate(savedInstanceState)
+            prefs = getSharedPreferences("speedbump_prefs", Context.MODE_PRIVATE)
 
-        val mainLayout = ScrollView(this).apply {
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-            setBackgroundColor(Color.parseColor("#121212"))
-            isFillViewport = true
-        }
-
-        val container = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(60, 80, 60, 80)
-            gravity = Gravity.TOP
-        }
-
-        // --- Header ---
-        val header = TextView(this).apply {
-            text = "Financial Health"
-            setTextColor(Color.WHITE)
-            textSize = 32f
-            setTypeface(null, Typeface.BOLD)
-            setPadding(0, 0, 0, 80)
-        }
-        container.addView(header)
-
-        // --- Stats Dashboard ---
-        val statsCard = createCardLayout()
-        
-        val statsTitle = TextView(this).apply {
-            text = "Your Impact"
-            setTextColor(Color.LTGRAY)
-            textSize = 14f
-            setTypeface(null, Typeface.BOLD)
-            setPadding(0, 0, 0, 20)
-        }
-        statsCard.addView(statsTitle)
-
-        val statsRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            weightSum = 2f
-        }
-
-        interceptionsText = TextView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-            text = "${prefs.getInt("interceptions", 0)}\nStops"
-            setTextColor(Color.WHITE)
-            textSize = 20f
-            gravity = Gravity.CENTER
-            setTypeface(null, Typeface.BOLD)
-        }
-        
-        savingsText = TextView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-            text = "$${prefs.getFloat("savings", 0f).toInt()}\nSaved"
-            setTextColor(Color.parseColor("#4CAF50"))
-            textSize = 20f
-            gravity = Gravity.CENTER
-            setTypeface(null, Typeface.BOLD)
-        }
-
-        statsRow.addView(interceptionsText)
-        statsRow.addView(savingsText)
-        statsCard.addView(statsRow)
-        container.addView(statsCard)
-
-        // --- Settings Section ---
-        addSectionHeader(container, "Configuration")
-
-        val wageInput = createInputField("Hourly Wage ($)", "25.0", InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
-        wageInput.setText(prefs.getFloat("hourly_wage", 25f).toString())
-        container.addView(wageInput)
-
-        val goalInput = createInputField("Savings Goal", "Emergency Fund", InputType.TYPE_CLASS_TEXT)
-        goalInput.setText(prefs.getString("savings_goal", "Financial Freedom"))
-        container.addView(goalInput)
-
-        val saveButton = createStyledButton("Update Configuration", "#6200EE") {
-            val wage = wageInput.text.toString().toFloatOrNull() ?: 25f
-            val goal = goalInput.text.toString()
-            prefs.edit().putFloat("hourly_wage", wage).putString("savings_goal", goal).apply()
-            Toast.makeText(this, "Configuration Saved!", Toast.LENGTH_SHORT).show()
-        }
-        container.addView(saveButton)
-
-        // --- Permissions Section ---
-        addSectionHeader(container, "System Access")
-
-        container.addView(createStyledButton("Enable Overlay Permission", "#333333") {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+            val mainLayout = ScrollView(this).apply {
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+                setBackgroundColor(Color.parseColor("#121212"))
+                isFillViewport = true
             }
-        })
 
-        container.addView(createStyledButton("Enable Usage Access", "#333333") {
-            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
-        })
+            val container = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(60, 80, 60, 80)
+                gravity = Gravity.TOP
+            }
 
-        mainLayout.addView(container)
-        setContentView(mainLayout)
+            // --- Header ---
+            val header = TextView(this).apply {
+                text = "Financial Health"
+                setTextColor(Color.WHITE)
+                textSize = 32f
+                setTypeface(null, Typeface.BOLD)
+                setPadding(0, 0, 0, 80)
+            }
+            container.addView(header)
 
-        startMonitorService()
-        
-        // Check for updates
-        UpdateManager(this).checkForUpdates()
+            // --- Stats Dashboard ---
+            val statsCard = createCardLayout()
+            
+            val statsTitle = TextView(this).apply {
+                text = "Your Impact"
+                setTextColor(Color.LTGRAY)
+                textSize = 14f
+                setTypeface(null, Typeface.BOLD)
+                setPadding(0, 0, 0, 20)
+            }
+            statsCard.addView(statsTitle)
+
+            val statsRow = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                weightSum = 2f
+            }
+
+            interceptionsText = TextView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                text = "${prefs.getInt("interceptions", 0)}\nStops"
+                setTextColor(Color.WHITE)
+                textSize = 20f
+                gravity = Gravity.CENTER
+                setTypeface(null, Typeface.BOLD)
+            }
+            
+            savingsText = TextView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                text = "$${prefs.getFloat("savings", 0f).toInt()}\nSaved"
+                setTextColor(Color.parseColor("#4CAF50"))
+                textSize = 20f
+                gravity = Gravity.CENTER
+                setTypeface(null, Typeface.BOLD)
+            }
+
+            statsRow.addView(interceptionsText)
+            statsRow.addView(savingsText)
+            statsCard.addView(statsRow)
+            container.addView(statsCard)
+
+            // --- Settings Section ---
+            addSectionHeader(container, "Configuration")
+
+            val wageInput = createInputField("Hourly Wage ($)", "25.0", InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
+            wageInput.setText(prefs.getFloat("hourly_wage", 25f).toString())
+            container.addView(wageInput)
+
+            val goalInput = createInputField("Savings Goal", "Emergency Fund", InputType.TYPE_CLASS_TEXT)
+            goalInput.setText(prefs.getString("savings_goal", "Financial Freedom"))
+            container.addView(goalInput)
+
+            val saveButton = createStyledButton("Update Configuration", "#6200EE") {
+                try {
+                    val wage = wageInput.text.toString().toFloatOrNull() ?: 25f
+                    val goal = goalInput.text.toString()
+                    prefs.edit().putFloat("hourly_wage", wage).putString("savings_goal", goal).apply()
+                    Toast.makeText(this@MainActivity, "Configuration Saved!", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    android.util.Log.e("Speedbump", "Save Error: ${e.message}")
+                }
+            }
+            container.addView(saveButton)
+
+            // --- Permissions Section ---
+            addSectionHeader(container, "System Access")
+
+            container.addView(createStyledButton("Enable Overlay Permission", "#333333") {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+                }
+            })
+
+            container.addView(createStyledButton("Enable Usage Access", "#333333") {
+                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+            })
+
+            mainLayout.addView(container)
+            setContentView(mainLayout)
+
+            startMonitorService()
+            
+            // Check for updates
+            UpdateManager(this).checkForUpdates()
+
+        } catch (e: Exception) {
+            android.util.Log.e("Speedbump", "Startup Crash: ${e.message}")
+            Toast.makeText(this, "App failed to start. Please report.", Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onResume() {
