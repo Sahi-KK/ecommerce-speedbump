@@ -139,7 +139,7 @@ class MainActivity : AppCompatActivity() {
 
         } catch (e: Exception) {
             android.util.Log.e("Speedbump", "Startup Crash: ${e.message}")
-            Toast.makeText(this, "App failed to start. Please report.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Crash: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
