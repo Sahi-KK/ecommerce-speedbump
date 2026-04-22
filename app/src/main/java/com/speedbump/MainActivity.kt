@@ -59,11 +59,15 @@ class MainActivity : AppCompatActivity() {
         setContentView(rootLayout)
 
         // Start the monitor service
-        val serviceIntent = Intent(this, SpeedbumpMonitorService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent)
-        } else {
-            startService(serviceIntent)
+        try {
+            val serviceIntent = Intent(this, SpeedbumpMonitorService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent)
+            } else {
+                startService(serviceIntent)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("Speedbump", "Service Start Error: ${e.message}")
         }
         } catch (e: Exception) {
             android.util.Log.e("Speedbump", "MainActivity Crash: ${e.message}")
