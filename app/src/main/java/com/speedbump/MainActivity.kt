@@ -26,12 +26,16 @@ class MainActivity : AppCompatActivity() {
         val overlayButton = Button(this).apply {
             text = "Enable Overlay Permission"
             setOnClickListener {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    val intent = Intent(
-                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:$packageName")
-                    )
-                    startActivity(intent)
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        val intent = Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:$packageName")
+                        )
+                        startActivity(intent)
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(this@MainActivity, "Could not open settings", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -39,8 +43,12 @@ class MainActivity : AppCompatActivity() {
         val accessibilityButton = Button(this).apply {
             text = "Enable Accessibility Service"
             setOnClickListener {
-                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                startActivity(intent)
+                try {
+                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(this@MainActivity, "Could not open accessibility settings", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
