@@ -14,8 +14,11 @@ import android.text.InputType
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.annotation.SuppressLint
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 
 class MainActivity : AppCompatActivity() {
 
@@ -147,6 +150,34 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
             })
 
+            // --- Location Shield ---
+            addSectionHeader(container, "Location Shield")
+            val locationCard = createCardLayout()
+            
+            val locationStatus = TextView(this).apply {
+                text = "GPS Alerts: Inactive"
+                setTextColor(Color.LTGRAY)
+                textSize = 14f
+                setPadding(0, 0, 0, 20)
+            }
+            locationCard.addView(locationStatus)
+
+            locationCard.addView(createStyledButton("Grant GPS Permissions", "#333333") {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    requestPermissions(arrayOf(
+                        android.Manifest.permission.ACCESS_FINE_LOCATION,
+                        android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                        android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    ), 1001)
+                }
+            })
+
+            locationCard.addView(createStyledButton("Tag This Place as Shopping Zone", "#4CAF50") {
+                tagCurrentLocation(locationStatus)
+            })
+
+            container.addView(locationCard)
+
             mainLayout.addView(container)
             setContentView(mainLayout)
 
@@ -241,6 +272,22 @@ class MainActivity : AppCompatActivity() {
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply { setMargins(0, 0, 0, 20) }
             setOnClickListener { onClick() }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun tagCurrentLocation(statusView: TextView) {
+        val fusedLocationClient = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+                val gm = GeofenceManager(this)
+                val id = "Zone_${System.currentTimeMillis()}"
+                gm.addGeofence(id, location.latitude, location.longitude)
+                statusView.text = "GPS Alerts: Active\n(Tagged: ${location.latitude.toString().take(7)}, ${location.longitude.toString().take(7)})"
+                Toast.makeText(this, "Shopping Zone Tagged!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Could not get GPS. Is it on?", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
