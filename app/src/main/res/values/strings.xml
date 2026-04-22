@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Ecommerce Speedbump</string>
+    <string name="accessibility_service_description">Monitors checkout buttons and calculates purchase time-cost.</string>
 </resources>
