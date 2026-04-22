@@ -96,13 +96,15 @@ class MainActivity : AppCompatActivity() {
             // --- Settings Section ---
             addSectionHeader(container, "Configuration")
 
-            val wageInput = createInputField("Hourly Wage ($)", "25.0", InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
+            val wageGroup = createInputField("Hourly Wage ($)", "25.0", InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
+            val wageInput = wageGroup.findViewById<EditText>(1001)
             wageInput.setText(prefs.getFloat("hourly_wage", 25f).toString())
-            container.addView(wageInput)
+            container.addView(wageGroup)
 
-            val goalInput = createInputField("Savings Goal", "Emergency Fund", InputType.TYPE_CLASS_TEXT)
+            val goalGroup = createInputField("Savings Goal", "Emergency Fund", InputType.TYPE_CLASS_TEXT)
+            val goalInput = goalGroup.findViewById<EditText>(1001)
             goalInput.setText(prefs.getString("savings_goal", "Financial Freedom"))
-            container.addView(goalInput)
+            container.addView(goalGroup)
 
             val saveButton = createStyledButton("Update Configuration", "#6200EE") {
                 try {
@@ -176,7 +178,7 @@ class MainActivity : AppCompatActivity() {
         container.addView(header)
     }
 
-    private fun createInputField(label: String, hintText: String, inputType: Int): EditText {
+    private fun createInputField(label: String, hintText: String, inputType: Int): LinearLayout {
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, 0, 0, 30)
@@ -186,9 +188,11 @@ class MainActivity : AppCompatActivity() {
             text = label
             setTextColor(Color.LTGRAY)
             textSize = 14f
+            setPadding(0, 0, 0, 10)
         }
         
         val editText = EditText(this).apply {
+            id = 1001
             hint = hintText
             setHintTextColor(Color.DKGRAY)
             setTextColor(Color.WHITE)
@@ -203,8 +207,7 @@ class MainActivity : AppCompatActivity() {
         
         layout.addView(labelView)
         layout.addView(editText)
-        // Note: Returning EditText but could wrap in layout. For simplicity in this procedural UI:
-        return editText
+        return layout
     }
 
     private fun createStyledButton(text: String, colorHex: String, onClick: () -> Unit): Button {
