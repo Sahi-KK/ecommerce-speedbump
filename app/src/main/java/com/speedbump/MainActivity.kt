@@ -93,6 +93,22 @@ class MainActivity : AppCompatActivity() {
             statsCard.addView(statsRow)
             container.addView(statsCard)
 
+            // --- Spending Psychology ---
+            addSectionHeader(container, "Spending Psychology")
+            val psychCard = createCardLayout()
+            val reasons = listOf("Boredom", "Stress", "Serious Matter", "Impulse")
+            reasons.forEach { reason ->
+                val count = prefs.getInt("reason_$reason", 0)
+                val row = TextView(this).apply {
+                    text = "$reason: $count times"
+                    setTextColor(Color.WHITE)
+                    textSize = 14f
+                    setPadding(0, 10, 0, 10)
+                }
+                psychCard.addView(row)
+            }
+            container.addView(psychCard)
+
             // --- Settings Section ---
             addSectionHeader(container, "Configuration")
 

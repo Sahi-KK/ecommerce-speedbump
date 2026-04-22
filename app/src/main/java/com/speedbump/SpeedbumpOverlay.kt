@@ -168,10 +168,52 @@ class SpeedbumpOverlay(private val context: Context) {
             override fun onFinish() {
                 timerText.text = "00:00"
                 timerText.setTextColor(Color.parseColor("#4CAF50"))
-                exitButton.visibility = View.VISIBLE
                 breatheAnimator?.cancel()
+                showSurvey(rootLayout, exitButton)
             }
         }.start()
+    }
+
+    private fun showSurvey(rootLayout: LinearLayout, exitButton: Button) {
+        val surveyContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(0, 40, 0, 0)
+        }
+
+        val questionText = TextView(context).apply {
+            text = "Why were you opening this app?"
+            setTextColor(Color.WHITE)
+            textSize = 18f
+            setTypeface(null, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 40)
+        }
+        surveyContainer.addView(questionText)
+
+        val reasons = listOf("Boredom", "Stress", "Serious Matter", "Impulse")
+        reasons.forEach { reason ->
+            val btn = Button(context).apply {
+                text = reason
+                setTextColor(Color.LTGRAY)
+                setBackgroundColor(Color.TRANSPARENT)
+                setAllCaps(false)
+                setOnClickListener {
+                    saveReason(reason)
+                    surveyContainer.visibility = View.GONE
+                    exitButton.visibility = View.VISIBLE
+                }
+            }
+            surveyContainer.addView(btn)
+        }
+
+        rootLayout.addView(surveyContainer)
+    }
+
+    private fun saveReason(reason: String) {
+        val prefs = context.getSharedPreferences("speedbump_prefs", Context.MODE_PRIVATE)
+        val currentCount = prefs.getInt("reason_$reason", 0)
+        prefs.edit().putInt("reason_$reason", currentCount + 1).apply()
     }
 
     private fun hide() {
