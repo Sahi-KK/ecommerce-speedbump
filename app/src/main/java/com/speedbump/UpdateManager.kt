@@ -18,7 +18,7 @@ import kotlin.concurrent.thread
 class UpdateManager(private val context: Context) {
 
     private val VERSION_URL = "https://raw.githubusercontent.com/Sahi-KK/ecommerce-speedbump/main/version.json"
-    private val APK_URL = "https://github.com/Sahi-KK/ecommerce-speedbump/releases/latest/download/app-release-unsigned.apk"
+    private val APK_URL = "https://github.com/Sahi-KK/ecommerce-speedbump/releases/latest/download/app-debug.apk"
 
     fun checkForUpdates() {
         thread {
