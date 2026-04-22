@@ -1,64 +1,218 @@
 package com.speedbump
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-
-import android.widget.Button
-import android.widget.LinearLayout
+import android.text.InputType
 import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var prefs: SharedPreferences
+    private lateinit var interceptionsText: TextView
+    private lateinit var savingsText: TextView
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        try {
-            super.onCreate(savedInstanceState)
-            
-            val rootLayout = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER
-                setPadding(50, 50, 50, 50)
-            }
+        super.onCreate(savedInstanceState)
+        prefs = getSharedPreferences("speedbump_prefs", Context.MODE_PRIVATE)
 
-        val overlayButton = Button(this).apply {
-            text = "Enable Overlay Permission"
-            setOnClickListener {
-                try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        val intent = Intent(
-                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                            Uri.parse("package:$packageName")
-                        )
-                        startActivity(intent)
-                    }
-                } catch (e: Exception) {
-                    Toast.makeText(this@MainActivity, "Could not open settings", Toast.LENGTH_SHORT).show()
-                }
-            }
+        val mainLayout = ScrollView(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            setBackgroundColor(Color.parseColor("#121212"))
+            isFillViewport = true
         }
 
-        val usageButton = Button(this).apply {
-            text = "Enable Usage Access"
-            setOnClickListener {
-                try {
-                    val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    Toast.makeText(this@MainActivity, "Could not open settings", Toast.LENGTH_SHORT).show()
-                }
-            }
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(60, 80, 60, 80)
+            gravity = Gravity.TOP
         }
 
-        rootLayout.addView(overlayButton)
-        rootLayout.addView(usageButton)
+        // --- Header ---
+        val header = TextView(this).apply {
+            text = "Financial Health"
+            setTextColor(Color.WHITE)
+            textSize = 32f
+            setTypeface(null, Typeface.BOLD)
+            setPadding(0, 0, 0, 80)
+        }
+        container.addView(header)
+
+        // --- Stats Dashboard ---
+        val statsCard = createCardLayout()
         
-        setContentView(rootLayout)
+        val statsTitle = TextView(this).apply {
+            text = "Your Impact"
+            setTextColor(Color.LTGRAY)
+            textSize = 14f
+            setTypeface(null, Typeface.BOLD)
+            setPadding(0, 0, 0, 20)
+        }
+        statsCard.addView(statsTitle)
 
-        // Start the monitor service
+        val statsRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            weightSum = 2f
+        }
+
+        interceptionsText = TextView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            text = "${prefs.getInt("interceptions", 0)}\nStops"
+            setTextColor(Color.WHITE)
+            textSize = 20f
+            gravity = Gravity.CENTER
+            setTypeface(null, Typeface.BOLD)
+        }
+        
+        savingsText = TextView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            text = "$${prefs.getFloat("savings", 0f).toInt()}\nSaved"
+            setTextColor(Color.parseColor("#4CAF50"))
+            textSize = 20f
+            gravity = Gravity.CENTER
+            setTypeface(null, Typeface.BOLD)
+        }
+
+        statsRow.addView(interceptionsText)
+        statsRow.addView(savingsText)
+        statsCard.addView(statsRow)
+        container.addView(statsCard)
+
+        // --- Settings Section ---
+        addSectionHeader(container, "Configuration")
+
+        val wageInput = createInputField("Hourly Wage ($)", "25.0", InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
+        wageInput.setText(prefs.getFloat("hourly_wage", 25f).toString())
+        container.addView(wageInput)
+
+        val goalInput = createInputField("Savings Goal", "Emergency Fund", InputType.TYPE_CLASS_TEXT)
+        goalInput.setText(prefs.getString("savings_goal", "Financial Freedom"))
+        container.addView(goalInput)
+
+        val saveButton = createStyledButton("Update Configuration", "#6200EE") {
+            val wage = wageInput.text.toString().toFloatOrNull() ?: 25f
+            val goal = goalInput.text.toString()
+            prefs.edit().putFloat("hourly_wage", wage).putString("savings_goal", goal).apply()
+            Toast.makeText(this, "Configuration Saved!", Toast.LENGTH_SHORT).show()
+        }
+        container.addView(saveButton)
+
+        // --- Permissions Section ---
+        addSectionHeader(container, "System Access")
+
+        container.addView(createStyledButton("Enable Overlay Permission", "#333333") {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+            }
+        })
+
+        container.addView(createStyledButton("Enable Usage Access", "#333333") {
+            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+        })
+
+        mainLayout.addView(container)
+        setContentView(mainLayout)
+
+        startMonitorService()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        interceptionsText.text = "${prefs.getInt("interceptions", 0)}\nStops"
+        savingsText.text = "$${prefs.getFloat("savings", 0f).toInt()}\nSaved"
+    }
+
+    private fun createCardLayout(): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(40, 40, 40, 40)
+            val bg = GradientDrawable().apply {
+                setColor(Color.parseColor("#1E1E1E"))
+                cornerRadius = 24f
+            }
+            background = bg
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(0, 0, 0, 60) }
+        }
+    }
+
+    private fun addSectionHeader(container: LinearLayout, title: String) {
+        val header = TextView(this).apply {
+            text = title.uppercase()
+            setTextColor(Color.GRAY)
+            textSize = 12f
+            setTypeface(null, Typeface.BOLD)
+            setPadding(0, 20, 0, 20)
+        }
+        container.addView(header)
+    }
+
+    private fun createInputField(label: String, hintText: String, inputType: Int): EditText {
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, 0, 0, 30)
+        }
+        
+        val labelView = TextView(this).apply {
+            text = label
+            setTextColor(Color.LTGRAY)
+            textSize = 14f
+        }
+        
+        val editText = EditText(this).apply {
+            hint = hintText
+            setHintTextColor(Color.DKGRAY)
+            setTextColor(Color.WHITE)
+            this.inputType = inputType
+            val bg = GradientDrawable().apply {
+                setColor(Color.parseColor("#252525"))
+                cornerRadius = 12f
+            }
+            background = bg
+            setPadding(30, 30, 30, 30)
+        }
+        
+        layout.addView(labelView)
+        layout.addView(editText)
+        // Note: Returning EditText but could wrap in layout. For simplicity in this procedural UI:
+        return editText
+    }
+
+    private fun createStyledButton(text: String, colorHex: String, onClick: () -> Unit): Button {
+        return Button(this).apply {
+            this.text = text
+            setTextColor(Color.WHITE)
+            val bg = GradientDrawable().apply {
+                setColor(Color.parseColor(colorHex))
+                cornerRadius = 12f
+            }
+            background = bg
+            setAllCaps(false)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(0, 0, 0, 20) }
+            setOnClickListener { onClick() }
+        }
+    }
+
+    private fun startMonitorService() {
         try {
             val serviceIntent = Intent(this, SpeedbumpMonitorService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -68,10 +222,6 @@ class MainActivity : AppCompatActivity() {
             }
         } catch (e: Exception) {
             android.util.Log.e("Speedbump", "Service Start Error: ${e.message}")
-        }
-        } catch (e: Exception) {
-            android.util.Log.e("Speedbump", "MainActivity Crash: ${e.message}")
-            finish()
         }
     }
 }

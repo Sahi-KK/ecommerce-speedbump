@@ -1,9 +1,13 @@
 package com.speedbump
 
+import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.CountDownTimer
 import android.view.Gravity
@@ -19,9 +23,13 @@ class SpeedbumpOverlay(private val context: Context) {
     private var windowManager: WindowManager? = null
     private var overlayView: View? = null
     private var timer: CountDownTimer? = null
+    private var breatheAnimator: ObjectAnimator? = null
 
     fun show(hoursLost: Double) {
-        if (overlayView != null) return // Already showing
+        if (overlayView != null) return
+
+        val prefs = context.getSharedPreferences("speedbump_prefs", Context.MODE_PRIVATE)
+        val savingsGoal = prefs.getString("savings_goal", "Financial Freedom")
 
         windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
@@ -42,60 +50,102 @@ class SpeedbumpOverlay(private val context: Context) {
             gravity = Gravity.CENTER
         }
 
-        // Create UI programmatically
         val rootLayout = object : LinearLayout(context) {
             override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
-                // Intercept back button
-                if (event?.keyCode == KeyEvent.KEYCODE_BACK) {
-                    return true
-                }
+                if (event?.keyCode == KeyEvent.KEYCODE_BACK) return true
                 return super.dispatchKeyEvent(event)
             }
         }.apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.BLACK)
+            val gradient = GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(Color.parseColor("#000000"), Color.parseColor("#1A1A1A"))
+            )
+            background = gradient
             gravity = Gravity.CENTER
-            setPadding(40, 40, 40, 40)
+            setPadding(80, 80, 80, 80)
             isFocusable = true
             isFocusableInTouchMode = true
         }
 
-        val messageText = TextView(context).apply {
-            text = if (hoursLost > 0) {
-                "This costs %.1f hours of your life.".format(hoursLost)
-            } else {
-                "Pause! Is this an impulse purchase?"
-            }
-            setTextColor(Color.WHITE)
-            textSize = 28f
+        val goalLabel = TextView(context).apply {
+            text = "REMEMBER YOUR GOAL"
+            setTextColor(Color.parseColor("#666666"))
+            textSize = 12f
+            letterSpacing = 0.2f
             setTypeface(null, Typeface.BOLD)
             gravity = Gravity.CENTER
-            setPadding(0, 0, 0, 50)
+        }
+
+        val goalText = TextView(context).apply {
+            text = savingsGoal
+            setTextColor(Color.WHITE)
+            textSize = 24f
+            setTypeface(null, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setPadding(0, 10, 0, 60)
+        }
+
+        val costText = TextView(context).apply {
+            text = "This purchase represents\n%.1f hours of your life.".format(hoursLost)
+            setTextColor(Color.parseColor("#E0E0E0"))
+            textSize = 18f
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 100)
         }
 
         val timerText = TextView(context).apply {
             text = "01:00"
             setTextColor(Color.WHITE)
-            textSize = 48f
-            setTypeface(null, Typeface.BOLD)
+            textSize = 64f
+            setTypeface(Typeface.MONOSPACE, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 100)
+        }
+
+        // Breathe Animation
+        breatheAnimator = ObjectAnimator.ofPropertyValuesHolder(
+            timerText,
+            PropertyValuesHolder.ofFloat("scaleX", 1f, 1.1f),
+            PropertyValuesHolder.ofFloat("scaleY", 1f, 1.1f)
+        ).apply {
+            duration = 4000
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.REVERSE
+            start()
+        }
+
+        val promptText = TextView(context).apply {
+            text = "Take a breath. Do you really need this?"
+            setTextColor(Color.parseColor("#888888"))
+            textSize = 14f
             gravity = Gravity.CENTER
             setPadding(0, 0, 0, 80)
         }
 
         val exitButton = Button(context).apply {
-            text = "Exit Overlay"
+            text = "I've reconsidered"
+            setTextColor(Color.WHITE)
             visibility = View.GONE
+            val bg = GradientDrawable().apply {
+                setColor(Color.parseColor("#333333"))
+                cornerRadius = 16f
+            }
+            background = bg
+            setPadding(60, 30, 60, 30)
             setOnClickListener { hide() }
         }
 
-        rootLayout.addView(messageText)
+        rootLayout.addView(goalLabel)
+        rootLayout.addView(goalText)
+        rootLayout.addView(costText)
         rootLayout.addView(timerText)
+        rootLayout.addView(promptText)
         rootLayout.addView(exitButton)
 
         windowManager?.addView(rootLayout, layoutParams)
         overlayView = rootLayout
 
-        // Start 60-second timer
         timer = object : CountDownTimer(60000, 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 val seconds = millisUntilFinished / 1000
@@ -104,13 +154,16 @@ class SpeedbumpOverlay(private val context: Context) {
 
             override fun onFinish() {
                 timerText.text = "00:00"
+                timerText.setTextColor(Color.parseColor("#4CAF50"))
                 exitButton.visibility = View.VISIBLE
+                breatheAnimator?.cancel()
             }
         }.start()
     }
 
     private fun hide() {
         timer?.cancel()
+        breatheAnimator?.cancel()
         overlayView?.let {
             windowManager?.removeView(it)
             overlayView = null

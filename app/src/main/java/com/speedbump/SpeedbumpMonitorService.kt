@@ -7,6 +7,7 @@ import android.app.Service
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -16,6 +17,7 @@ import android.util.Log
 class SpeedbumpMonitorService : Service() {
 
     private lateinit var overlay: SpeedbumpOverlay
+    private lateinit var prefs: SharedPreferences
     private val handler = Handler(Looper.getMainLooper())
     private var lastTriggeredPackage = ""
     private var lastTriggeredTime = 0L
@@ -36,12 +38,34 @@ class SpeedbumpMonitorService : Service() {
         "com.bigbasket.mobileapp",
         "com.dunzo.user",
         "in.swiggy.android",
-        "com.application.zomato"
+        "com.application.zomato",
+        "com.ebay.mobile",
+        "com.ebay.kleinanzeigen",
+        "com.etsy.android",
+        "com.shopee.ph",
+        "com.shopee.id",
+        "com.shopee.vn",
+        "com.shopee.my",
+        "com.shopee.th",
+        "com.shopee.sg",
+        "com.shopee.tw",
+        "com.lazada.android",
+        "com.alibaba.aliexpresspro",
+        "com.shopee.br",
+        "com.shopee.mx",
+        "com.shopee.co",
+        "com.shopee.cl",
+        "com.shopee.ar",
+        "com.shopee.pl",
+        "com.shopee.es",
+        "com.shopee.fr"
     )
 
     override fun onCreate() {
         super.onCreate()
         overlay = SpeedbumpOverlay(this)
+        prefs = getSharedPreferences("speedbump_prefs", Context.MODE_PRIVATE)
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(1, createNotification(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         } else {
@@ -71,13 +95,27 @@ class SpeedbumpMonitorService : Service() {
                 // Prevent spamming if already triggered recently for this app (e.g. within 5 mins)
                 if (topApp != lastTriggeredPackage || (time - lastTriggeredTime > 5 * 60 * 1000)) {
                     Log.d("Speedbump", "Shopping app detected: $topApp")
+                    
                     lastTriggeredPackage = topApp
                     lastTriggeredTime = time
-                    overlay.show(0.0) // 0.0 because we can't read the price now
+
+                    // Update stats
+                    val interceptions = prefs.getInt("interceptions", 0) + 1
+                    val currentSavings = prefs.getFloat("savings", 0f)
+                    val hourlyWage = prefs.getFloat("hourly_wage", 25f)
+                    
+                    // Assume an average impulse save of $50 per intervention
+                    val newSavings = currentSavings + 50f
+                    
+                    prefs.edit()
+                        .putInt("interceptions", interceptions)
+                        .putFloat("savings", newSavings)
+                        .apply()
+
+                    // Calculate hours lost for a $50 purchase
+                    val hoursLost = 50.0 / hourlyWage
+                    overlay.show(hoursLost)
                 }
-            } else if (topApp != packageName && topApp != "") {
-                // If they are in a non-shopping app, reset the "last triggered" so it can trigger again when they return
-                // But we don't want to reset it immediately while they are in the shopping app
             }
         }
     }
