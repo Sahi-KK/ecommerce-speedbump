@@ -207,13 +207,39 @@ class SpeedbumpOverlay(private val context: Context) {
             surveyContainer.addView(btn)
         }
 
+        exitButton.setOnClickListener {
+            val prefs = context.getSharedPreferences("speedbump_prefs", Context.MODE_PRIVATE)
+            val lastReason = prefs.getString("last_reason", "")
+            
+            if (lastReason != "Serious Matter") {
+                // Successful Stop!
+                val interceptions = prefs.getInt("interceptions", 0) + 1
+                val savings = prefs.getFloat("savings", 0f) + 50f
+                prefs.edit()
+                    .putInt("interceptions", interceptions)
+                    .putFloat("savings", savings)
+                    .apply()
+                
+                // Take them home to help them stop
+                val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+                    addCategory(Intent.CATEGORY_HOME)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startActivity(homeIntent)
+            }
+            hide()
+        }
+
         rootLayout.addView(surveyContainer)
     }
 
     private fun saveReason(reason: String) {
         val prefs = context.getSharedPreferences("speedbump_prefs", Context.MODE_PRIVATE)
         val currentCount = prefs.getInt("reason_$reason", 0)
-        prefs.edit().putInt("reason_$reason", currentCount + 1).apply()
+        prefs.edit()
+            .putInt("reason_$reason", currentCount + 1)
+            .putString("last_reason", reason)
+            .apply()
     }
 
     private fun hide() {

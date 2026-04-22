@@ -101,20 +101,7 @@ class SpeedbumpMonitorService : Service() {
                     lastTriggeredPackage = topApp
                     lastTriggeredTime = time
 
-                    // Update stats
-                    val interceptions = prefs.getInt("interceptions", 0) + 1
-                    val currentSavings = prefs.getFloat("savings", 0f)
                     val hourlyWage = prefs.getFloat("hourly_wage", 25f)
-                    
-                    // Assume an average impulse save of $50 per intervention
-                    val newSavings = currentSavings + 50f
-                    
-                    prefs.edit()
-                        .putInt("interceptions", interceptions)
-                        .putFloat("savings", newSavings)
-                        .apply()
-
-                    // Calculate hours lost for a $50 purchase
                     val hoursLost = 50.0 / hourlyWage
                     overlay.show(hoursLost)
                 }
