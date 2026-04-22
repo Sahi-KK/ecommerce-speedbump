@@ -97,30 +97,41 @@ class SpeedbumpOverlay(private val context: Context) {
         val timerText = TextView(context).apply {
             text = "01:00"
             setTextColor(Color.WHITE)
-            textSize = 64f
+            textSize = 72f
             setTypeface(Typeface.MONOSPACE, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 40)
+        }
+
+        val promptText = TextView(context).apply {
+            text = "Breathe In..."
+            setTextColor(Color.parseColor("#888888"))
+            textSize = 20f
+            setTypeface(null, Typeface.ITALIC)
             gravity = Gravity.CENTER
             setPadding(0, 0, 0, 100)
         }
 
-        // Breathe Animation
+        // Dramatic Breathe Animation
         breatheAnimator = ObjectAnimator.ofPropertyValuesHolder(
             timerText,
-            PropertyValuesHolder.ofFloat("scaleX", 1f, 1.1f),
-            PropertyValuesHolder.ofFloat("scaleY", 1f, 1.1f)
+            PropertyValuesHolder.ofFloat("scaleX", 1f, 1.25f),
+            PropertyValuesHolder.ofFloat("scaleY", 1f, 1.25f)
         ).apply {
             duration = 4000
             repeatCount = ValueAnimator.INFINITE
             repeatMode = ValueAnimator.REVERSE
+            addUpdateListener { animator ->
+                val fraction = animator.animatedFraction
+                if (fraction > 0.5f) {
+                    promptText.text = "Breathe Out..."
+                    promptText.setTextColor(Color.parseColor("#4CAF50"))
+                } else {
+                    promptText.text = "Breathe In..."
+                    promptText.setTextColor(Color.parseColor("#81C784"))
+                }
+            }
             start()
-        }
-
-        val promptText = TextView(context).apply {
-            text = "Take a breath. Do you really need this?"
-            setTextColor(Color.parseColor("#888888"))
-            textSize = 14f
-            gravity = Gravity.CENTER
-            setPadding(0, 0, 0, 80)
         }
 
         val exitButton = Button(context).apply {
@@ -129,10 +140,10 @@ class SpeedbumpOverlay(private val context: Context) {
             visibility = View.GONE
             val bg = GradientDrawable().apply {
                 setColor(Color.parseColor("#333333"))
-                cornerRadius = 16f
+                cornerRadius = 20f
             }
             background = bg
-            setPadding(60, 30, 60, 30)
+            setPadding(80, 40, 80, 40)
             setOnClickListener { hide() }
         }
 
@@ -148,8 +159,10 @@ class SpeedbumpOverlay(private val context: Context) {
 
         timer = object : CountDownTimer(60000, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                val seconds = millisUntilFinished / 1000
-                timerText.text = "00:%02d".format(seconds)
+                val totalSeconds = millisUntilFinished / 1000
+                val minutes = totalSeconds / 60
+                val seconds = totalSeconds % 60
+                timerText.text = "%02d:%02d".format(minutes, seconds)
             }
 
             override fun onFinish() {
